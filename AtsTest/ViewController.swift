@@ -12,12 +12,14 @@ import SafariServices
 class ViewController: UIViewController, UITextFieldDelegate, WKNavigationDelegate {
     @IBOutlet weak var urlField: UITextField!
     @IBOutlet weak var webView: WKWebView!
+    @IBOutlet weak var textView: UITextView!
     
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view.
         self.urlField.delegate = self
         self.webView.navigationDelegate = self
+        self.webView.configuration.processPool = WKProcessPool()
     }
     
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
@@ -25,7 +27,23 @@ class ViewController: UIViewController, UITextFieldDelegate, WKNavigationDelegat
         self.loadInWebView(textField)
         return true
     }
-
+    
+    @IBAction func loadAsUrlSession(_ sender: Any) {
+        guard let url = URL(string: self.urlField.text!) else {return}
+        
+        URLSession.shared.dataTask(with: url) { (data, response, error) in
+            DispatchQueue.main.async {
+                guard let data = data, error == nil else {
+                    self.showAlert(title: "URL Session", message: error?.localizedDescription ?? "Unknown error")
+                    return
+                }
+                
+                let resultString = String(data: data, encoding: .utf8)
+                self.textView.text = resultString
+            }
+        }.resume()
+    }
+    
     // load the given URL in a new SafariViewController
     @IBAction func openInSafariViewController(_ sender: Any) {
         if let url = URL(string: self.urlField.text!) {
@@ -35,7 +53,16 @@ class ViewController: UIViewController, UITextFieldDelegate, WKNavigationDelegat
     
     // load the given URL in the WKWebView
     @IBAction func loadInWebView(_ sender: Any) {
-        WKWebsiteDataStore.default().removeData(ofTypes: [WKWebsiteDataTypeDiskCache, WKWebsiteDataTypeMemoryCache], modifiedSince: Date(timeIntervalSince1970: 0), completionHandler:{ })
+        URLCache.shared.removeAllCachedResponses()
+        HTTPCookieStorage.shared.removeCookies(since: Date.distantPast)
+               print("All cookies deleted")
+
+               WKWebsiteDataStore.default().fetchDataRecords(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes()) { records in
+                   records.forEach { record in
+                       WKWebsiteDataStore.default().removeData(ofTypes: record.dataTypes, for: [record], completionHandler: {})
+                       print("Cookie ::: \(record) deleted")
+                   }
+               }
         
         if let url = URL(string: self.urlField.text!) {
             let request = URLRequest(url: url)
