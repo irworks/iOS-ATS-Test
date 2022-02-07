@@ -55,14 +55,13 @@ class ViewController: UIViewController, UITextFieldDelegate, WKNavigationDelegat
     @IBAction func loadInWebView(_ sender: Any) {
         URLCache.shared.removeAllCachedResponses()
         HTTPCookieStorage.shared.removeCookies(since: Date.distantPast)
-               print("All cookies deleted")
-
-               WKWebsiteDataStore.default().fetchDataRecords(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes()) { records in
-                   records.forEach { record in
-                       WKWebsiteDataStore.default().removeData(ofTypes: record.dataTypes, for: [record], completionHandler: {})
-                       print("Cookie ::: \(record) deleted")
-                   }
-               }
+        
+        WKWebsiteDataStore.default().fetchDataRecords(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes()) { records in
+            records.forEach { record in
+                WKWebsiteDataStore.default().removeData(ofTypes: record.dataTypes, for: [record], completionHandler: {})
+                print("Deleted cookie: \(record)")
+            }
+        }
         
         if let url = URL(string: self.urlField.text!) {
             let request = URLRequest(url: url)
