@@ -52,7 +52,7 @@ class ViewController: UIViewController, UITextFieldDelegate, WKNavigationDelegat
     }
     
     // load the given URL in the WKWebView
-    @IBAction func loadInWebView(_ sender: Any) {
+    @IBAction func loadInWebView(_ sender: Any) {        
         URLCache.shared.removeAllCachedResponses()
         HTTPCookieStorage.shared.removeCookies(since: Date.distantPast)
         
